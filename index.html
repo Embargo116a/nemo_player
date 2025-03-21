@@ -2,23 +2,91 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>영상 리스트 + 플레이어</title>
+  <title>상단탭 + 사이드바 + 본문 + 드래그리사이즈</title>
   <style>
-    body {
-      font-family: sans-serif;
+    /* 전체 리셋 및 기본 */
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: sans-serif;
+    }
+    
+    /* 상단바 */
+    header.top-nav {
+      background: linear-gradient(135deg, #4e54c8, #8f94fb);
+      color: white;
+      padding: 0.75rem 1.5rem;
       display: flex;
-      height: 100vh;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav-tabs {
+      list-style: none;
+      display: flex;
+      gap: 1rem;
+    }
+    .nav-tabs li a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      transition: background-color 0.2s;
+    }
+    .nav-tabs li a:hover,
+    .nav-tabs li a.active {
+      background-color: rgba(255, 255, 255, 0.3);
     }
 
+    /* 페이지 전체 레이아웃(상단바 아래) */
+    .container {
+      display: flex;
+      width: 100%;
+      height: calc(100% - 60px); /* 상단바 높이 제외 (대략) */
+      overflow: hidden;          /* 가로스크롤 방지 */
+    }
+
+    /* 사이드바 */
     .sidebar {
-      width: 280px;
+      width: 400px;     /* 초기 폭 */
+      flex-shrink: 0;   /* flex 레이아웃에서 자동 축소 방지 */
       border-right: 1px solid #ddd;
+      background-color: #f9f9f9;
       overflow-y: auto;
       padding: 1rem;
-      background-color: #f9f9f9;
+      user-select:none;
+      -webkit-user-select: none;
+      -moz-user-select:none;
+      -ms-user-select: none;
+    }
+    .sidebar-content {
+      display: none;
+    }
+    .sidebar-content.active {
+      display: block;
     }
 
+    /* 드래그 리사이저 */
+    .resizer {
+      width: 5px;
+      background-color: #ccc;
+      cursor: col-resize;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    /* 본문 */
+    .main-content {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    /* 동영상 리스트 아이템 */
     .video-item {
       display: flex;
       gap: 1rem;
@@ -27,50 +95,46 @@
       border-radius: 6px;
       transition: background-color 0.2s;
     }
-
     .video-item:hover {
       background-color: #eaeaea;
     }
-
+    .video-item.selected {
+      background-color: #cddbf9;
+      border-left: 4px solid #4e54c8;
+    }
     .video-thumbnail {
       width: 90px;
       height: auto;
       flex-shrink: 0;
       border-radius: 4px;
     }
-
     .video-info {
       flex: 1;
       display: flex;
+      width:100%;
       flex-direction: column;
       justify-content: center;
     }
-
     .video-title {
+      display: inline-block;
+      width: calc(100% - 6em);
       font-weight: bold;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     .video-meta {
       font-size: 0.85rem;
       color: #666;
     }
 
-    .main {
-      flex: 1;
-      padding: 1rem;
-      overflow-y: auto;
-    }
-
+    /* 유튜브 임베드 & 곡 목록 */
     .video-embed iframe {
       width: 100%;
       height: 400px;
       border: none;
       margin-bottom: 1rem;
     }
-
     .song-item {
       padding: 0.5rem 0;
       border-bottom: 1px solid #eee;
@@ -78,34 +142,105 @@
   </style>
 </head>
 <body>
-  <div class="sidebar" id="sidebar"></div>
-  <div class="main">
-    <div class="video-embed" id="video-player"></div>
-    <div id="song-list"></div>
+  <!-- 상단 탭 영역 -->
+  <header class="top-nav">
+    <div class="logo">My App</div>
+    <nav>
+      <ul class="nav-tabs">
+        <li><a href="#" class="tab-link active" data-target="sidebar-list1">목록1</a></li>
+        <li><a href="#" class="tab-link" data-target="sidebar-list2">목록2</a></li>
+        <li><a href="#" class="tab-link" data-target="sidebar-search">검색</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    <!-- 사이드바 -->
+    <aside class="sidebar" id="sidebar">
+      <div id="sidebar-list1" class="sidebar-content active"></div>
+      <div id="sidebar-list2" class="sidebar-content">목록2 컨텐츠</div>
+      <div id="sidebar-search" class="sidebar-content">검색 컨텐츠</div>
+    </aside>
+
+    <!-- 리사이저 막대 -->
+    <div class="resizer" id="resizer"></div>
+
+    <!-- 본문 -->
+    <main class="main-content">
+      <div class="video-embed" id="video-player"></div>
+      <div id="song-list"></div>
+    </main>
   </div>
 
   <script>
+    // 탭 전환 로직
+    document.querySelectorAll('.tab-link').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        // 탭 비활성화
+        document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        // 사이드바 컨텐츠 전환
+        const targetId = link.dataset.target;
+        document.querySelectorAll('.sidebar-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.sidebar-content').forEach(c => c.style.display = 'none');
+        const targetElem = document.getElementById(targetId);
+        if(targetElem) {
+          targetElem.classList.add('active');
+          targetElem.style.display = 'block';
+        }
+      });
+    });
+
+    // 사이드바 리사이즈
+    const resizer = document.getElementById('resizer');
+    const sidebar = document.getElementById('sidebar');
+    let isResizing = false;
+
+    resizer.addEventListener('mousedown', () => {
+      isResizing = true;
+      document.body.style.cursor = 'col-resize';
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!isResizing) return;
+      let newWidth = e.clientX; // 마우스 X좌표
+      if(newWidth < 150) newWidth = 150; // 최소 폭
+      // if(newWidth > 600) newWidth = 600; // 원한다면 최대 폭을 제한
+      sidebar.style.width = newWidth + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if(isResizing) {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+      }
+    });
+
+    // 도우미: URL에서 영상 ID 추출
     function extractVideoId(url) {
       const match = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
       return match ? match[1] : null;
     }
 
+    // 도우미: ISO8601 -> hh:mm:ss 변환
     function formatDuration(iso) {
-      const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      const match = iso.match(/PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?/);
       if (!match) return iso;
       const h = parseInt(match[1]) || 0;
       const m = parseInt(match[2]) || 0;
       const s = parseInt(match[3]) || 0;
-      return (h ? `${h.toString().padStart(2, '0')}:` : '') +
-             `${m.toString().padStart(2, '0')}:` +
-             `${s.toString().padStart(2, '0')}`;
+      return (h ? String(h).padStart(2, '0') + ':' : '') +
+             String(m).padStart(2, '0') + ':' +
+             String(s).padStart(2, '0');
     }
 
+    // JSON 데이터 fetch -> 목록1 채우기
     fetch('videos.json')
       .then(res => res.json())
       .then(data => {
         const videoMap = new Map();
-
         data.forEach(entry => {
           const video_id = extractVideoId(entry.video_url);
           if (!video_id) return;
@@ -124,6 +259,7 @@
             });
           }
 
+          // 곡 정보 추가
           if (entry.song_title && entry.artist) {
             videoMap.get(video_id).songs.push({
               title: entry.song_title,
@@ -132,28 +268,44 @@
           }
         });
 
-        const sidebar = document.getElementById('sidebar');
+        const list1 = document.getElementById('sidebar-list1');
         const player = document.getElementById('video-player');
         const songList = document.getElementById('song-list');
 
+        // 사이드바 항목 생성
         videoMap.forEach((data, video_id) => {
           const item = document.createElement('div');
           item.className = 'video-item';
           item.innerHTML = `
-            <img class="video-thumbnail" src="${data.metadata.video_thumbnail}" alt="섬네일">
+            <img class="video-thumbnail" src="${data.metadata.video_thumbnail}" alt="썸네일">
             <div class="video-info">
               <div class="video-title">${data.metadata.video_title}</div>
               <div class="video-meta">${data.metadata.video_publish_date} · ${data.metadata.video_duration}</div>
             </div>
           `;
 
+          // 항목 클릭 시 본문에 표시
           item.addEventListener('click', () => {
-            player.innerHTML = `<iframe src="https://www.youtube.com/embed/${video_id}" allowfullscreen></iframe>`;
-            songList.innerHTML = data.songs.map(s => `<div class="song-item">${s.title} - ${s.artist}</div>`).join('');
-          });
+  // 1) 본문에 영상 임베드, 곡 목록 표시 (기존 로직)
+  player.innerHTML = `<iframe src="https://www.youtube.com/embed/${video_id}" allowfullscreen></iframe>`;
+  songList.innerHTML = data.songs
+    .map(s => `<div class="song-item">${s.title} - ${s.artist}</div>`)
+    .join('');
 
-          sidebar.appendChild(item);
+  // 2) 사이드바 강조 (selected) 처리
+  //   - 모든 .video-item에서 selected 제거
+  document.querySelectorAll('.video-item').forEach(v => {
+    v.classList.remove('selected');
+  });
+  //   - 현재 클릭된 item만 selected 추가
+  item.classList.add('selected');
+});
+
+          list1.appendChild(item);
         });
+      })
+      .catch(err => {
+        console.error('videos.json 로드 실패:', err);
       });
   </script>
 </body>
