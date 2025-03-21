@@ -2,21 +2,15 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>상단탭 + 사이드바 + 본문 + 드래그리사이즈</title>
+  <title>Nemo Player</title>
   <style>
-    /* 전체 리셋 및 기본 */
     * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+      box-sizing: border-box; margin: 0; padding: 0;
     }
     html, body {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       font-family: sans-serif;
     }
-    
-    /* 상단바 */
     header.top-nav {
       background: linear-gradient(135deg, #4e54c8, #8f94fb);
       color: white;
@@ -27,41 +21,33 @@
     }
     .nav-tabs {
       list-style: none;
-      display: flex;
-      gap: 1rem;
+      display: flex; gap: 1rem;
     }
     .nav-tabs li a {
-      color: white;
-      text-decoration: none;
+      color: white; text-decoration: none;
       padding: 0.5rem 1rem;
       border-radius: 25px;
       transition: background-color 0.2s;
     }
     .nav-tabs li a:hover,
     .nav-tabs li a.active {
-      background-color: rgba(255, 255, 255, 0.3);
+      background-color: rgba(255,255,255,0.3);
     }
-
-    /* 페이지 전체 레이아웃(상단바 아래) */
     .container {
       display: flex;
       width: 100%;
-      height: calc(100% - 60px); /* 상단바 높이 제외 (대략) */
-      overflow: hidden;          /* 가로스크롤 방지 */
+      height: calc(100% - 60px);
+      overflow: hidden;
     }
-
-    /* 사이드바 */
     .sidebar {
-      width: 400px;     /* 초기 폭 */
-      flex-shrink: 0;   /* flex 레이아웃에서 자동 축소 방지 */
+      width: 500px;
+      flex-shrink: 0;
       border-right: 1px solid #ddd;
       background-color: #f9f9f9;
       overflow-y: auto;
-      padding: 1rem;
-      user-select:none;
-      -webkit-user-select: none;
-      -moz-user-select:none;
-      -ms-user-select: none;
+      user-select: none;
+      position: relative;
+      padding: 0.5rem;
     }
     .sidebar-content {
       display: none;
@@ -69,30 +55,11 @@
     .sidebar-content.active {
       display: block;
     }
-
-    /* 드래그 리사이저 */
-    .resizer {
-      width: 5px;
-      background-color: #ccc;
-      cursor: col-resize;
-      flex-shrink: 0;
-      user-select: none;
-    }
-
-    /* 본문 */
-    .main-content {
-      flex: 1;
-      padding: 1rem;
-      overflow-y: auto;
-    }
-
-    /* 동영상 리스트 아이템 */
     .video-item {
-      display: flex;
-      gap: 1rem;
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: 6px;
+      display: flex; gap: 1rem; cursor: pointer;
+      padding: 0.5rem; border-radius: 6px;
+      background-color: #fff;
+      margin-bottom: 0.5rem;
       transition: background-color 0.2s;
     }
     .video-item:hover {
@@ -103,10 +70,8 @@
       border-left: 4px solid #4e54c8;
     }
     .video-thumbnail {
-      width: 90px;
-      height: auto;
-      flex-shrink: 0;
-      border-radius: 4px;
+      width: 80px; height: auto;
+      flex-shrink: 0; border-radius: 4px;
     }
     .video-info {
       flex: 1;
@@ -124,189 +89,382 @@
       text-overflow: ellipsis;
     }
     .video-meta {
-      font-size: 0.85rem;
-      color: #666;
+      font-size: 0.85rem; color: #666;
     }
-
-    /* 유튜브 임베드 & 곡 목록 */
+    .sort-controls {
+      display: flex; gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .search-box {
+      margin-bottom: 0.5rem;
+    }
+    .search-box input {
+      width: 100%; padding: 0.3rem; font-size: 0.9rem;
+    }
+    .song-table {
+      width: 100%; border-collapse: collapse;
+      background-color: #fff;
+    }
+    .song-table th, .song-table td {
+      text-align: left; padding: 0.5rem; font-size: 0.95rem;
+    }
+    .song-table th { background-color: #ddd; }
+    .song-table tr {
+      cursor: pointer; transition: background-color 0.2s;
+    }
+    .song-table tr:hover {
+      background-color: #e0e7ff;
+    }
+    .song-table tr.selected {
+      background-color: #cddbf9;
+    }
+    .resizer {
+      width: 5px; background-color: #ccc;
+      cursor: col-resize; flex-shrink: 0;
+      user-select: none;
+    }
+    .main-content {
+      flex: 1; padding: 1rem; overflow-y: auto;
+    }
     .video-embed iframe {
-      width: 100%;
-      height: 400px;
-      border: none;
-      margin-bottom: 1rem;
+      width: 100%; height: 400px; border: none; margin-bottom: 1rem;
+    }
+    .video-list {
+      display: flex; flex-direction: column; gap: 0.75rem;
     }
     .song-item {
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #eee;
+      background-color: #f0f0f0;
+      margin: 0.4rem 0;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      font-size: 0.95rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .song-item:hover {
+      background-color: #e0e7ff;
+      transform: translateY(-1px);
+    }
+    .song-item .timestamp {
+      font-weight: bold; color: #4e54c8; min-width: 60px;
+    }
+    .video-item2 {
+      display: flex; gap: 1rem; cursor: pointer;
+      padding: 0.5rem; border-radius: 6px;
+      background-color: #f7f7f7;
+      transition: background-color 0.2s;
+    }
+    .video-item2:hover {
+      background-color: #eaeaea;
+    }
+    .video-item2.selected {
+      background-color: #cddbf9;
+      border-left: 4px solid #4e54c8;
     }
   </style>
 </head>
 <body>
-  <!-- 상단 탭 영역 -->
   <header class="top-nav">
-    <div class="logo">My App</div>
+    <div class="logo">Nemo Player</div>
     <nav>
       <ul class="nav-tabs">
-        <li><a href="#" class="tab-link active" data-target="sidebar-list1">목록1</a></li>
-        <li><a href="#" class="tab-link" data-target="sidebar-list2">목록2</a></li>
-        <li><a href="#" class="tab-link" data-target="sidebar-search">검색</a></li>
+        <li><a href="#" class="tab-link active" data-target="sidebar1">Archive</a></li>
+        <li><a href="#" class="tab-link" data-target="sidebar2">Song index</a></li>
       </ul>
     </nav>
   </header>
-
   <div class="container">
-    <!-- 사이드바 -->
-    <aside class="sidebar" id="sidebar">
-      <div id="sidebar-list1" class="sidebar-content active"></div>
-      <div id="sidebar-list2" class="sidebar-content">목록2 컨텐츠</div>
-      <div id="sidebar-search" class="sidebar-content">검색 컨텐츠</div>
+    <aside class="sidebar" id="sideContainer">
+      <div id="sidebar1" class="sidebar-content active">
+      </div>
+      <div id="sidebar2" class="sidebar-content">
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search Title / Artist" />
+        </div>
+        <div class="sort-controls">
+          <label>Sort:
+            <select id="sortKey">
+              <option value="title">Title</option>
+              <option value="artist">Artist</option>
+            </select>
+          </label>
+          <label>Order:
+            <select id="sortDir">
+              <option value="asc">A→Z</option>
+              <option value="desc">Z→A</option>
+            </select>
+          </label>
+        </div>
+        <table class="song-table">
+         <colgroup>
+          <col style="width: 60%;" />
+          <col style="width: 30%;" />
+          <col style="width: 10%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Artist</th>
+              <th>#</th>
+            </tr>
+          </thead>
+          <tbody id="songTbody"></tbody>
+        </table>
+      </div>
     </aside>
-
-    <!-- 리사이저 막대 -->
     <div class="resizer" id="resizer"></div>
-
-    <!-- 본문 -->
     <main class="main-content">
-      <div class="video-embed" id="video-player"></div>
-      <div id="song-list"></div>
+      <div class="video-embed" id="player"></div>
+      <div class="video-list" id="videoList"></div>
     </main>
   </div>
-
   <script>
-    // 탭 전환 로직
-    document.querySelectorAll('.tab-link').forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        // 탭 비활성화
-        document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-
-        // 사이드바 컨텐츠 전환
-        const targetId = link.dataset.target;
-        document.querySelectorAll('.sidebar-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.sidebar-content').forEach(c => c.style.display = 'none');
-        const targetElem = document.getElementById(targetId);
-        if(targetElem) {
-          targetElem.classList.add('active');
-          targetElem.style.display = 'block';
-        }
-      });
-    });
-
-    // 사이드바 리사이즈
-    const resizer = document.getElementById('resizer');
-    const sidebar = document.getElementById('sidebar');
-    let isResizing = false;
-
-    resizer.addEventListener('mousedown', () => {
-      isResizing = true;
-      document.body.style.cursor = 'col-resize';
-    });
-
-    document.addEventListener('mousemove', e => {
-      if (!isResizing) return;
-      let newWidth = e.clientX; // 마우스 X좌표
-      if(newWidth < 150) newWidth = 150; // 최소 폭
-      // if(newWidth > 600) newWidth = 600; // 원한다면 최대 폭을 제한
-      sidebar.style.width = newWidth + 'px';
-    });
-
-    document.addEventListener('mouseup', () => {
-      if(isResizing) {
-        isResizing = false;
-        document.body.style.cursor = 'default';
-      }
-    });
-
-    // 도우미: URL에서 영상 ID 추출
     function extractVideoId(url) {
       const match = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
       return match ? match[1] : null;
     }
-
-    // 도우미: ISO8601 -> hh:mm:ss 변환
     function formatDuration(iso) {
-      const match = iso.match(/PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?/);
-      if (!match) return iso;
-      const h = parseInt(match[1]) || 0;
-      const m = parseInt(match[2]) || 0;
-      const s = parseInt(match[3]) || 0;
-      return (h ? String(h).padStart(2, '0') + ':' : '') +
-             String(m).padStart(2, '0') + ':' +
-             String(s).padStart(2, '0');
+      const re = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+      const m = iso.match(re);
+      if (!m) return iso;
+      const hh = parseInt(m[1])||0, mm = parseInt(m[2])||0, ss = parseInt(m[3])||0;
+      return (hh ? String(hh).padStart(2,'0')+':' : '')
+        + String(mm).padStart(2,'0') + ':'
+        + String(ss).padStart(2,'0');
     }
-
-    // JSON 데이터 fetch -> 목록1 채우기
-    fetch('videos.json')
-      .then(res => res.json())
-      .then(data => {
-        const videoMap = new Map();
-        data.forEach(entry => {
-          const video_id = extractVideoId(entry.video_url);
-          if (!video_id) return;
-
-          if (!videoMap.has(video_id)) {
-            videoMap.set(video_id, {
-              metadata: {
-                video_id,
-                video_url: entry.video_url,
-                video_title: entry.video_title,
-                video_thumbnail: entry.video_thumbnail,
-                video_publish_date: entry.video_publish_date,
-                video_duration: formatDuration(entry.video_duration)
-              },
-              songs: []
-            });
-          }
-
-          // 곡 정보 추가
-          if (entry.song_title && entry.artist) {
-            videoMap.get(video_id).songs.push({
-              title: entry.song_title,
-              artist: entry.artist
-            });
-          }
-        });
-
-        const list1 = document.getElementById('sidebar-list1');
-        const player = document.getElementById('video-player');
-        const songList = document.getElementById('song-list');
-
-        // 사이드바 항목 생성
-        videoMap.forEach((data, video_id) => {
-          const item = document.createElement('div');
-          item.className = 'video-item';
-          item.innerHTML = `
-            <img class="video-thumbnail" src="${data.metadata.video_thumbnail}" alt="썸네일">
-            <div class="video-info">
-              <div class="video-title">${data.metadata.video_title}</div>
-              <div class="video-meta">${data.metadata.video_publish_date} · ${data.metadata.video_duration}</div>
-            </div>
-          `;
-
-          // 항목 클릭 시 본문에 표시
-          item.addEventListener('click', () => {
-  // 1) 본문에 영상 임베드, 곡 목록 표시 (기존 로직)
-  player.innerHTML = `<iframe src="https://www.youtube.com/embed/${video_id}" allowfullscreen></iframe>`;
-  songList.innerHTML = data.songs
-    .map(s => `<div class="song-item">${s.title} - ${s.artist}</div>`)
-    .join('');
-
-  // 2) 사이드바 강조 (selected) 처리
-  //   - 모든 .video-item에서 selected 제거
-  document.querySelectorAll('.video-item').forEach(v => {
-    v.classList.remove('selected');
-  });
-  //   - 현재 클릭된 item만 selected 추가
-  item.classList.add('selected');
-});
-
-          list1.appendChild(item);
-        });
-      })
-      .catch(err => {
-        console.error('videos.json 로드 실패:', err);
+    function formatTimestamp(sec) {
+      if (sec==null) return '';
+      const h = Math.floor(sec/3600);
+      const m = Math.floor((sec%3600)/60);
+      const s = sec%60;
+      return (h>0
+        ? String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')
+        : String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')
+      );
+    }
+    function sortSongEntries(entries, key='title', dir='asc') {
+      return [...entries].sort(([aKey,aVal],[bKey,bVal])=>{
+        const [aTitle,aArtist] = aKey.split(' - ');
+        const [bTitle,bArtist] = bKey.split(' - ');
+        const aCmp = (key==='title'? aTitle : aArtist);
+        const bCmp = (key==='title'? bTitle : bArtist);
+        const c = aCmp.localeCompare(bCmp);
+        return dir==='asc'? c : -c;
       });
+    }
+    let videoMap = new Map();
+    let songMap = new Map();
+    let isResizing = false;
+    function renderList1() {
+      const container = document.getElementById('sidebar1');
+      container.innerHTML = '';
+      videoMap.forEach((data, videoId)=>{
+        const item = document.createElement('div');
+        item.className='video-item';
+        item.innerHTML=`
+          <img class="video-thumbnail" src="${data.metadata.video_thumbnail}" alt="THUMBNAIL"/>
+          <div class="video-info">
+            <div class="video-title">${data.metadata.video_title}</div>
+            <div class="video-meta">
+              ${data.metadata.video_publish_date} · ${data.metadata.video_duration}
+            </div>
+          </div>
+        `;
+        item.addEventListener('click', ()=>{
+          document.querySelectorAll('.video-item').forEach(v=>v.classList.remove('selected'));
+          item.classList.add('selected');
+          const player = document.getElementById('player');
+          const videoList = document.getElementById('videoList');
+          player.innerHTML=`
+            <iframe
+              src="https://www.youtube.com/embed/${videoId}"
+              allowfullscreen>
+            </iframe>
+          `;
+          videoList.innerHTML = data.songs.map(s=>{
+            const t = s.timestamp||0;
+            const tsStr=formatTimestamp(t);
+            return `
+              <div class="song-item" data-timestamp="${t}">
+                <span class="timestamp">[${tsStr}]</span>
+                <span class="title">${s.title}</span> -
+                <span class="artist">${s.artist}</span>
+              </div>
+            `;
+          }).join('');
+          document.querySelectorAll('.song-item').forEach(songEl=>{
+            songEl.addEventListener('click', ()=>{
+              const start = songEl.dataset.timestamp||0;
+              player.innerHTML=`
+                <iframe
+                  src="https://www.youtube.com/embed/${videoId}?start=${start}&autoplay=1"
+                  allowfullscreen>
+                </iframe>
+              `;
+            });
+          });
+        });
+        container.appendChild(item);
+      });
+    }
+    function renderList2() {
+      const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+      const sortKey = document.getElementById('sortKey').value;
+      const sortDir = document.getElementById('sortDir').value;
+      let arr = sortSongEntries(songMap.entries(), sortKey, sortDir);
+      if(searchVal){
+        arr = arr.filter(([songKey,videos])=>{
+          const [title,artist] = songKey.split(' - ');
+          return (
+            title.toLowerCase().includes(searchVal) ||
+            artist.toLowerCase().includes(searchVal)
+          );
+        });
+      }
+      const tbody = document.getElementById('songTbody');
+      tbody.innerHTML = '';
+      arr.forEach(([songKey,videos])=>{
+        const [title,artist] = songKey.split(' - ');
+        const tr = document.createElement('tr');
+        tr.innerHTML=`
+          <td>${title}</td>
+          <td>${artist}</td>
+          <td style="text-align:right;">${videos.length}</td>
+        `;
+        tr.addEventListener('click', ()=>{
+          document.querySelectorAll('.song-table tr').forEach(r=>r.classList.remove('selected'));
+          tr.classList.add('selected');
+          const player=document.getElementById('player');
+          const videoList=document.getElementById('videoList');
+          player.innerHTML='';
+          videoList.innerHTML=videos.map(v=>{
+            const st = v.timestamp||0;
+            const stStr= formatTimestamp(st);
+            return `
+              <div class="video-item2" data-id="${v.video_id}" data-start="${st}">
+                <img class="video-thumbnail" src="${v.video_thumbnail}" alt="THUMBNAIL"/>
+                <div class="video-info">
+                  <div class="video-title">${v.video_title}</div>
+                  <div class="video-meta">
+                    ${v.video_publish_date} · ${stStr}<br/>
+                    ${v.song_title} - ${v.artist}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+          document.querySelectorAll('.video-item2').forEach(card=>{
+            card.addEventListener('click', ()=>{
+              document.querySelectorAll('.video-item2').forEach(x=>x.classList.remove('selected'));
+              card.classList.add('selected');
+              const id=card.dataset.id;
+              const start=card.dataset.start;
+              player.innerHTML=`
+                <iframe
+                  src="https://www.youtube.com/embed/${id}?start=${start}&autoplay=1"
+                  allowfullscreen>
+                </iframe>
+              `;
+            });
+          });
+        });
+        tbody.appendChild(tr);
+      });
+    }
+    document.querySelectorAll('.tab-link').forEach(link=>{
+      link.addEventListener('click', e=>{
+        e.preventDefault();
+        document.querySelectorAll('.tab-link').forEach(x=>x.classList.remove('active'));
+        link.classList.add('active');
+        const targetId = link.dataset.target;
+        document.querySelectorAll('.sidebar-content').forEach(sc=>{
+          sc.classList.remove('active');
+          sc.style.display='none';
+        });
+        const tarEl = document.getElementById(targetId);
+        if(tarEl){
+          tarEl.classList.add('active');
+          tarEl.style.display='block';
+        }
+        document.getElementById('player').innerHTML='';
+        document.getElementById('videoList').innerHTML='';
+      });
+    });
+    const resizer = document.getElementById('resizer');
+    const sideContainer = document.getElementById('sideContainer');
+    resizer.addEventListener('mousedown', ()=>{
+      isResizing=true;
+      document.body.style.cursor='col-resize';
+    });
+    document.addEventListener('mousemove', e=>{
+      if(!isResizing) return;
+      const newW=Math.max(200, e.clientX);
+      sideContainer.style.width=newW+'px';
+    });
+    document.addEventListener('mouseup', ()=>{
+      if(isResizing){
+        isResizing=false;
+        document.body.style.cursor='default';
+      }
+    });
+    let dataLoaded = false;
+    let loadedData = null;
+    fetch('videos.json')
+    .then(res=>res.json())
+    .then(data=>{
+      dataLoaded=true;
+      loadedData=data;
+      data.forEach(entry=>{
+        const vid = extractVideoId(entry.video_url);
+        if(!vid) return;
+        if(!videoMap.has(vid)){
+          videoMap.set(vid, {
+            metadata:{
+              video_id: vid,
+              video_url: entry.video_url,
+              video_title: entry.video_title,
+              video_thumbnail: entry.video_thumbnail,
+              video_publish_date: (entry.video_publish_date||'').slice(0,10),
+              video_duration: formatDuration(entry.video_duration)
+            },
+            songs:[]
+          });
+        }
+        if(entry.song_title && entry.artist){
+          videoMap.get(vid).songs.push({
+            title: entry.song_title,
+            artist: entry.artist,
+            timestamp: entry.timestamp||0
+          });
+        }
+      });
+      data.forEach(entry=>{
+        const vid = extractVideoId(entry.video_url);
+        if(!vid) return;
+        const key=`${entry.song_title} - ${entry.artist}`;
+        if(!songMap.has(key)){
+          songMap.set(key,[]);
+        }
+        songMap.get(key).push({
+          video_id: vid,
+          timestamp: entry.timestamp||0,
+          video_title: entry.video_title,
+          video_thumbnail: entry.video_thumbnail,
+          video_publish_date: (entry.video_publish_date||'').slice(0,10),
+          song_title: entry.song_title,
+          artist: entry.artist
+        });
+      });
+      renderList1();
+      renderList2();
+      document.getElementById('searchInput').addEventListener('input', renderList2);
+      document.getElementById('sortKey').addEventListener('change', renderList2);
+      document.getElementById('sortDir').addEventListener('change', renderList2);
+    })
+    .catch(err=>{
+      console.error('videos.json loading -FAIL-:', err);
+    });
   </script>
 </body>
 </html>
