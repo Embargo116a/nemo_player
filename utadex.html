@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>드래그로 사이드바 크기 조절 가능한 UI</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <title>DEX</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <!-- 상단바 -->
@@ -25,17 +25,7 @@
       <div id="sidebar-list1" class="sidebar-content active">
         <h2>동영상 리스트</h2>
         <div class="video-list">
-          {% for video in videos %}
-          <div class="video-item">
-            <a href="{{ video.video_url }}" target="_blank">
-              <img class="video-thumbnail" src="{{ video.thumbnail_url }}" alt="동영상 섬네일">
-            </a>
-            <div class="video-info">
-              <div class="video-title">{{ video.title }}</div>
-              <div class="video-meta">{{ video.pub_date }} · {{ video.duration }}</div>
-            </div>
-          </div>
-          {% endfor %}
+          <!-- JSON 데이터를 클라이언트 사이드에서 삽입할 예정 -->
         </div>
       </div>
       
@@ -74,16 +64,10 @@
     tabLinks.forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        // 모든 탭 링크에서 active 제거
         tabLinks.forEach(l => l.classList.remove('active'));
-        // 클릭한 탭에 active 클래스 추가
         link.classList.add('active');
-        
-        // 모든 사이드바 콘텐츠 숨김
         const allSidebarContents = document.querySelectorAll('.sidebar-content');
         allSidebarContents.forEach(content => content.classList.remove('active'));
-        
-        // data-target에 명시된 사이드바 콘텐츠 활성화
         const targetId = link.getAttribute('data-target');
         const targetContent = document.getElementById(targetId);
         if (targetContent) {
@@ -104,7 +88,6 @@
     
     document.addEventListener('mousemove', (e) => {
       if (!isResizing) return;
-      // 최소 150px, 최대 400px 사이드바 폭 제한
       let newWidth = e.clientX;
       if(newWidth < 150) newWidth = 150;
       if(newWidth > 400) newWidth = 400;
@@ -117,6 +100,37 @@
         document.body.style.cursor = 'default';
       }
     });
+    
+    // videos.json 파일에서 데이터를 불러와 중복 제거 후 동영상 리스트를 생성
+    fetch('videos.json')
+      .then(response => response.json())
+      .then(data => {
+        const uniqueVideosMap = new Map();
+        data.forEach(video => {
+          if (!uniqueVideosMap.has(video.video_url)) {
+            uniqueVideosMap.set(video.video_url, video);
+          }
+        });
+        const uniqueVideos = Array.from(uniqueVideosMap.values());
+        let htmlOutput = '';
+        uniqueVideos.forEach(video => {
+          htmlOutput += `
+            <div class="video-item">
+              <a href="${video.video_url}" target="_blank">
+                <img class="video-thumbnail" src="${video.video_thumbnail}" alt="동영상 섬네일">
+              </a>
+              <div class="video-info">
+                <div class="video-title">${video.video_title}</div>
+                <div class="video-meta">${video.video_publish_date} · ${video.video_duration}</div>
+              </div>
+            </div>
+          `;
+        });
+        document.querySelector('.video-list').innerHTML = htmlOutput;
+      })
+      .catch(error => {
+        console.error('JSON 파일 불러오기 오류:', error);
+      });
   </script>
 </body>
 </html>
