@@ -176,8 +176,7 @@
   </header>
   <div class="container">
     <aside class="sidebar" id="sideContainer">
-      <div id="sidebar1" class="sidebar-content active">
-      </div>
+      <div id="sidebar1" class="sidebar-content active"></div>
       <div id="sidebar2" class="sidebar-content">
         <div class="search-box">
           <input type="text" id="searchInput" placeholder="Search Title / Artist" />
@@ -197,10 +196,10 @@
           </label>
         </div>
         <table class="song-table">
-         <colgroup>
-          <col style="width: 60%;" />
-          <col style="width: 30%;" />
-          <col style="width: 10%;" />
+          <colgroup>
+            <col style="width: 60%;" />
+            <col style="width: 30%;" />
+            <col style="width: 10%;" />
           </colgroup>
           <thead>
             <tr>
@@ -220,10 +219,17 @@
     </main>
   </div>
   <script>
+    // 전각->반각 느낌표 치환 함수 예시
+    function unifyExclamation(str){
+      if(!str) return ''; 
+      return str.replaceAll('！', '!');
+    }
+
     function extractVideoId(url) {
       const match = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
       return match ? match[1] : null;
     }
+
     function formatDuration(iso) {
       const re = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
       const m = iso.match(re);
@@ -233,8 +239,9 @@
         + String(mm).padStart(2,'0') + ':'
         + String(ss).padStart(2,'0');
     }
+
     function formatTimestamp(sec) {
-      if (sec==null) return '';
+      if (sec == null) return '';
       const h = Math.floor(sec/3600);
       const m = Math.floor((sec%3600)/60);
       const s = sec%60;
@@ -243,6 +250,7 @@
         : String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')
       );
     }
+
     function sortSongEntries(entries, key='title', dir='asc') {
       return [...entries].sort(([aKey,aVal],[bKey,bVal])=>{
         const [aTitle,aArtist] = aKey.split(' - ');
@@ -253,9 +261,11 @@
         return dir==='asc'? c : -c;
       });
     }
+
     let videoMap = new Map();
     let songMap = new Map();
     let isResizing = false;
+
     function renderList1() {
       const container = document.getElementById('sidebar1');
       container.innerHTML = '';
@@ -284,7 +294,7 @@
           `;
           videoList.innerHTML = data.songs.map(s=>{
             const t = s.timestamp||0;
-            const tsStr=formatTimestamp(t);
+            const tsStr = formatTimestamp(t);
             return `
               <div class="song-item" data-timestamp="${t}">
                 <span class="timestamp">[${tsStr}]</span>
@@ -308,11 +318,13 @@
         container.appendChild(item);
       });
     }
+
     function renderList2() {
       const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
       const sortKey = document.getElementById('sortKey').value;
       const sortDir = document.getElementById('sortDir').value;
       let arr = sortSongEntries(songMap.entries(), sortKey, sortDir);
+
       if(searchVal){
         arr = arr.filter(([songKey,videos])=>{
           const [title,artist] = songKey.split(' - ');
@@ -335,12 +347,12 @@
         tr.addEventListener('click', ()=>{
           document.querySelectorAll('.song-table tr').forEach(r=>r.classList.remove('selected'));
           tr.classList.add('selected');
-          const player=document.getElementById('player');
-          const videoList=document.getElementById('videoList');
+          const player = document.getElementById('player');
+          const videoList = document.getElementById('videoList');
           player.innerHTML='';
           videoList.innerHTML=videos.map(v=>{
             const st = v.timestamp||0;
-            const stStr= formatTimestamp(st);
+            const stStr = formatTimestamp(st);
             return `
               <div class="video-item2" data-id="${v.video_id}" data-start="${st}">
                 <img class="video-thumbnail" src="${v.video_thumbnail}" alt="THUMBNAIL"/>
@@ -372,6 +384,7 @@
         tbody.appendChild(tr);
       });
     }
+
     document.querySelectorAll('.tab-link').forEach(link=>{
       link.addEventListener('click', e=>{
         e.preventDefault();
@@ -391,6 +404,7 @@
         document.getElementById('videoList').innerHTML='';
       });
     });
+
     const resizer = document.getElementById('resizer');
     const sideContainer = document.getElementById('sideContainer');
     resizer.addEventListener('mousedown', ()=>{
@@ -399,8 +413,8 @@
     });
     document.addEventListener('mousemove', e=>{
       if(!isResizing) return;
-      const newW=Math.max(200, e.clientX);
-      sideContainer.style.width=newW+'px';
+      const newW = Math.max(200, e.clientX);
+      sideContainer.style.width = newW + 'px';
     });
     document.addEventListener('mouseup', ()=>{
       if(isResizing){
@@ -408,63 +422,73 @@
         document.body.style.cursor='default';
       }
     });
+
     let dataLoaded = false;
     let loadedData = null;
+
     fetch('videos.json')
-    .then(res=>res.json())
-    .then(data=>{
-      dataLoaded=true;
-      loadedData=data;
-      data.forEach(entry=>{
-        const vid = extractVideoId(entry.video_url);
-        if(!vid) return;
-        if(!videoMap.has(vid)){
-          videoMap.set(vid, {
-            metadata:{
-              video_id: vid,
-              video_url: entry.video_url,
-              video_title: entry.video_title,
-              video_thumbnail: entry.video_thumbnail,
-              video_publish_date: (entry.video_publish_date||'').slice(0,10),
-              video_duration: formatDuration(entry.video_duration)
-            },
-            songs:[]
+      .then(res=>res.json())
+      .then(data=>{
+        dataLoaded = true;
+        loadedData = data;
+
+        data.forEach(entry=>{
+          const vid = extractVideoId(entry.video_url);
+          if(!vid) return;
+
+          // 전각 느낌표를 반각으로 통일
+          const normalizedSongTitle = unifyExclamation(entry.song_title);
+          const normalizedArtist    = unifyExclamation(entry.artist);
+
+          // videoMap에 저장
+          if(!videoMap.has(vid)){
+            videoMap.set(vid, {
+              metadata: {
+                video_id: vid,
+                video_url: entry.video_url,
+                video_title: entry.video_title,
+                video_thumbnail: entry.video_thumbnail,
+                video_publish_date: (entry.video_publish_date||'').slice(0,10),
+                video_duration: formatDuration(entry.video_duration)
+              },
+              songs: []
+            });
+          }
+          if(entry.song_title && entry.artist){
+            videoMap.get(vid).songs.push({
+              title: entry.song_title,
+              artist: entry.artist,
+              timestamp: entry.timestamp || 0
+            });
+          }
+
+          // 곡별로 모아두는 songMap에도 전각/반각 통일된 문자열을 사용해 키 생성
+          const key = `${normalizedSongTitle} - ${normalizedArtist}`;
+          if(!songMap.has(key)){
+            songMap.set(key, []);
+          }
+          songMap.get(key).push({
+            video_id: vid,
+            timestamp: entry.timestamp || 0,
+            video_title: entry.video_title,
+            video_thumbnail: entry.video_thumbnail,
+            video_publish_date: (entry.video_publish_date||'').slice(0,10),
+            song_title: entry.song_title,
+            artist: entry.artist
           });
-        }
-        if(entry.song_title && entry.artist){
-          videoMap.get(vid).songs.push({
-            title: entry.song_title,
-            artist: entry.artist,
-            timestamp: entry.timestamp||0
-          });
-        }
-      });
-      data.forEach(entry=>{
-        const vid = extractVideoId(entry.video_url);
-        if(!vid) return;
-        const key=`${entry.song_title} - ${entry.artist}`;
-        if(!songMap.has(key)){
-          songMap.set(key,[]);
-        }
-        songMap.get(key).push({
-          video_id: vid,
-          timestamp: entry.timestamp||0,
-          video_title: entry.video_title,
-          video_thumbnail: entry.video_thumbnail,
-          video_publish_date: (entry.video_publish_date||'').slice(0,10),
-          song_title: entry.song_title,
-          artist: entry.artist
         });
+
+        // 첫 목록과 노래 인덱스 표시
+        renderList1();
+        renderList2();
+
+        document.getElementById('searchInput').addEventListener('input', renderList2);
+        document.getElementById('sortKey').addEventListener('change', renderList2);
+        document.getElementById('sortDir').addEventListener('change', renderList2);
+      })
+      .catch(err=>{
+        console.error('videos.json loading -FAIL-:', err);
       });
-      renderList1();
-      renderList2();
-      document.getElementById('searchInput').addEventListener('input', renderList2);
-      document.getElementById('sortKey').addEventListener('change', renderList2);
-      document.getElementById('sortDir').addEventListener('change', renderList2);
-    })
-    .catch(err=>{
-      console.error('videos.json loading -FAIL-:', err);
-    });
   </script>
 </body>
 </html>
