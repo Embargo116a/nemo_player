@@ -277,7 +277,7 @@
           <div class="video-info">
             <div class="video-title">${data.metadata.video_title}</div>
             <div class="video-meta">
-              ${data.metadata.video_publish_date} · ${data.metadata.video_duration}
+              ${data.metadata.live_actual_start} · ${data.metadata.video_duration}
             </div>
           </div>
         `;
@@ -359,7 +359,7 @@
                 <div class="video-info">
                   <div class="video-title">${v.video_title}</div>
                   <div class="video-meta">
-                    ${v.video_publish_date} · ${stStr}<br/>
+                    ${v.live_actual_start} · ${stStr}<br/>
                     ${v.song_title} - ${v.artist}
                   </div>
                 </div>
@@ -448,7 +448,7 @@
                 video_url: entry.video_url,
                 video_title: entry.video_title,
                 video_thumbnail: entry.video_thumbnail,
-                video_publish_date: (entry.video_publish_date||'').slice(0,10),
+                live_actual_start: (entry.live_actual_start||'').slice(0,10),
                 video_duration: formatDuration(entry.video_duration)
               },
               songs: []
@@ -472,7 +472,7 @@
             timestamp: entry.timestamp || 0,
             video_title: entry.video_title,
             video_thumbnail: entry.video_thumbnail,
-            video_publish_date: (entry.video_publish_date||'').slice(0,10),
+            live_actual_start: (entry.live_actual_start||'').slice(0,10),
             song_title: entry.song_title,
             artist: entry.artist
           });
